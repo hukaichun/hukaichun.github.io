@@ -1,0 +1,32 @@
+title: 聊齋誌疑
+description: 與 Claude Code 的牢騷
+lang: zh-Hant
+url: https://hukaichun.github.io
+baseurl: ""
+author: hukaichun
+github_username: hukaichun
+timezone: Asia/Taipei
+
+permalink: /posts/:title/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  # kramdown 把 $$...$$ 轉成 \(...\)（行內）與 \[...\]（區塊），交給 KaTeX 在瀏覽器端渲染
+  math_engine: mathjax
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+exclude:
+  - local_backup/
+  - references/
+  - README.md
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
