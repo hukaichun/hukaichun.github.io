@@ -207,3 +207,37 @@ footer.site-footer {
 .tag-filter { margin-bottom: 28px; }
 .tag.active { border-color: var(--accent); color: var(--accent); }
 nav.site-nav a:first-child { margin-left: 0; }
+
+/* 圖表 */
+:root { --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; }
+}
+:root[data-theme="dark"] { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; }
+
+.viz { display: block; margin: 1.8em auto 0.6em; max-width: 100%; }
+.viz .grid { stroke: var(--border); stroke-width: 1; }
+.viz .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.55; }
+.viz text { font-family: inherit; fill: var(--muted); font-size: 12px; }
+.viz .lab { fill: var(--fg); font-size: 12px; }
+.viz path { stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.viz .swatch { stroke-width: 3; }
+.viz .s1 { stroke: var(--series-1); }
+.viz .s2 { stroke: var(--series-2); }
+.viz .s3 { stroke: var(--series-3); }
+
+figure { margin: 1.8em 0; }
+figcaption { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 0.4em; }
+
+@media (max-width: 560px) {
+  .viz text { font-size: 17px; }
+  .viz .lab { font-size: 17px; }
+}
+
+.post-subtitle {
+  color: var(--muted);
+  font-size: 0.98rem;
+  margin: 0.2em 0 0.8em;
+  line-height: 1.5;
+}
+.post-card .post-subtitle { font-size: 0.9rem; margin: 0.1em 0 0.4em; }
