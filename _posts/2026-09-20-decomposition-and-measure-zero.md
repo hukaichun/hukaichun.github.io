@@ -6,7 +6,7 @@ tags: [retrieval, embedding, kernel-methods, math]
 description: "Schmidt 分解說 cross-encoder 就是無限維的 embedding，差別只在維度。但定理給的是 L2 收斂，而有限的資料集在連續測度下測度為零。Slepian 的集中問題給出有限項要有逐點控制的條件。"
 ---
 
-[上一篇](/posts/jev-is-not-new/)的結論是：Jev 的運算形狀就是 rerank，選項到 runtime 才給，整份清單一起讀進去打分。那為什麼不做成 embedding？兩邊各編一個向量、內積、softmax，候選還能預先算好，成本差好幾個數量級。同樣的問題檢索領域問了十幾年：為什麼非得在向量檢索後面再接一個 cross-encoder？
+[上一篇](/posts/jev-is-not-new/)的結論是：Jev 的運算形狀就是 rerank，選項到 runtime 才給，整份清單一起讀進去打分。那為什麼不做成 embedding？兩邊各編一個向量、內積、softmax，候選還能預先算好，成本差好幾個數量級。同樣的問題，檢索領域從 2019 年 BERT 進場之後就一直在問：為什麼非得在向量檢索後面再接一個 cross-encoder？
 
 數學上，這個問題的答案看起來是肯定的。只要相關性函數 $$K(q,c)$$ 平方可積，Schmidt 分解就給出
 
