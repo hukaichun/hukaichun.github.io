@@ -130,6 +130,8 @@ Jev 可能是一個很好用的產品。它只是不新。
 
 真正值得記下來的，也許是另一件事：我們花了好幾年，把分類問題硬塞給生成模型，還叫它先寫一篇作文再回答。現在有人把它拆回來，大家反而覺得這是創新。
 
+順著這個問題往下還有兩篇：既然 Jev 是 rerank，那[為什麼不能做成 embedding](/posts/decomposition-and-measure-zero/)；以及把維度一路推到無限之後，[會發生什麼事](/posts/infinite-width-fireworks/)。
+
 ---
 
 ## Appendix：Jev 的架構推測

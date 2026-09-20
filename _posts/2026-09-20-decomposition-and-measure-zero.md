@@ -133,6 +133,8 @@ Schmidt 分解說 cross-encoder 就是無限維的 embedding，這是對的，�
 
 （圖中的譜是用 $$N = 1200$$ 的均勻網格做 Nyström 離散化後算出來的，只作示意；理論上的敘述不依賴這個數值。）
 
+[下一篇](/posts/infinite-width-fireworks/)把維度推到無限：如果有限維的預算是問題，那無限寬的網路呢？
+
 ## 參考資料
 
 - Slepian, D., & Pollak, H. O. (1961). Prolate Spheroidal Wave Functions, Fourier Analysis and Uncertainty — I. *Bell System Technical Journal*, 40(1), 43–63.
