@@ -243,8 +243,6 @@ Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）換了一個旋�
 
 三篇放在一起看：縮放、參數化、初始化大小，每一個旋鈕都能把 $$\delta_wK$$ 消掉，反過來調，也都能把它放回來。$$\delta_wK$$ 消不消失，是選出來的。
 
-也有人持相反的看法。Liu、Zhu 與 Belkin（[2020](https://arxiv.org/abs/2010.01092v3)）主張核是常數是「associated to the model itself」，「neither due to a choice of a scaling of the model」；理由是 Hessian 的譜範數隨寬度以 $$1/\sqrt n$$ 消失，模型在一個固定半徑的球裡就是線性的。放回積分寫法，他們說的模型已經包含 $$1/\sqrt n$$ 的參數化，Hessian 小，來自每個原子的質量是 $$1/\sqrt n$$；那個球量的是參數的歐氏距離，也就是第 4 節選的內積。兩種說法指的是同一組設定，差別在於他們把它算進了模型。
-
 ## 8. 回頭看一遍
 
 把走過的路從頭排一次：
@@ -278,6 +276,5 @@ NTK 之後有不少工作不在這三格裡。一種是做實驗確認核在訓�
 - Chapelle, O. (2007). [Training a Support Vector Machine in the Primal](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf). Neural Computation, 19(5), 1155–1178.
 - Chizat, L., Oyallon, E., & Bach, F. (2019). [On Lazy Training in Differentiable Programming](https://arxiv.org/abs/1812.07956v5). NeurIPS 2019.
 - Yang, G., & Hu, E. J. (2021). [Feature Learning in Infinite-Width Neural Networks](https://arxiv.org/abs/2011.14522v3). ICML 2021.
-- Liu, C., Zhu, L., & Belkin, M. (2020). [On the linearity of large non-linear models: when and why the tangent kernel is constant](https://arxiv.org/abs/2010.01092v3). NeurIPS 2020.
 - Woodworth, B., Gunasekar, S., Lee, J. D., Moroshko, E., Savarese, P., Golan, I., Soudry, D., & Srebro, N. (2020). [Kernel and Rich Regimes in Overparametrized Models](https://arxiv.org/abs/2002.09277v3). COLT 2020.
 - Lewkowycz, A., Bahri, Y., Dyer, E., Sohl-Dickstein, J., & Gur-Ari, G. (2020). [The large learning rate phase of deep learning: the catapult mechanism](https://arxiv.org/abs/2003.02218v1).
