@@ -183,9 +183,9 @@ $$
 
 在兩層的情形，$$\Sigma^{(2)}$$ 對應讀出那一項 $$K_\mu$$，$$\Theta^{(1)}\dot\Sigma^{(2)}$$ 對應特徵那一項 $$K_w$$。兩邊的數值不完全相同：原文在參數上用歐氏內積，讀出那塊是 $$\frac1n\sum_i\sigma(x;w_i)\,\sigma(x';w_i)$$；我們在 $$L^2(\mu)$$ 下是 $$\int_w\sigma\,\sigma\,d\mu$$。權重的差別來自第 4 節選的內積，結構則相同：一項來自 $$\delta\mu$$，一項來自 $$\delta w$$。NTK 兩項都在。
 
-這和預期不同。「權重不動」的讀法對應 $$\delta w=0$$，核是 $$K_\mu$$，也就是隨機特徵；原文的核卻保留了 $$\delta w$$ 的貢獻。在積分表示裡，$$\delta w=0$$ 和 $$K_w$$ 還在，兩者沒辦法同時成立。照原文的核，$$w$$ 在動。核在訓練中保持不變，靠的是第 3 節那一步：位移取成梯度，每個 $$w_i$$ 只動 $$O(n^{-1/2})$$，個別特徵的變化在極限裡消失。
+這和預期不同。「權重不動」的讀法對應 $$\delta w=0$$，核是 $$K_\mu$$，也就是隨機特徵；原文的核卻保留了 $$\delta w$$ 的貢獻。在積分表示裡，$$\delta w=0$$ 和 $$K_w$$ 還在，兩者沒辦法同時成立。照原文的核，$$w$$ 在動。核在訓練中保持不變，靠的是第 3 節那一步：位移取成梯度，每個 $$w_i$$ 只動 $$O(n^{-1/2})$$，個別特徵的變化在極限裡消失。原文的 Remark 4 自己也這樣說：個別 activation 的變化隨寬度縮小，「However their collective variation is significant」；$$\Sigma$$ 那項是最後一層的學習，另一項是下面各層的學習。
 
-Lee 等人（[2019](https://arxiv.org/abs/1902.06720v4)）在 Jacot 之後。他們沒有回頭檢查這一步，而是直接從「權重幾乎不動」出發，把網路換成它在初始參數的一階 Taylor 展開：
+Lee 等人（[2019](https://arxiv.org/abs/1902.06720v4)）在 Jacot 之後，把「參數只動一點點」當成出發點，原文說「This small motion of the parameters is crucial to the effect we present」。他們把網路換成它在初始參數的一階 Taylor 展開：
 
 $$
 f^{\rm lin}(x)=f_0(x)+\nabla_\theta f_0(x)\,(\theta-\theta_0).
@@ -215,7 +215,7 @@ $$
 
 $$\delta\mu$$ 也會改變 $$K$$，但它只重新加權同一組特徵，張成的函數空間不變；特徵本身換掉，只來自 $$\delta w$$。所以這裡只看 $$\delta_wK$$。
 
-$$\nabla_w\Phi$$ 是模型給的，一般不為零；$$\delta w\neq0$$，$$\delta_wK$$ 就一般不為零。核會不會動，跟第 3 節是同一個答案：看 $$\delta w$$ 怎麼選。至於在訓練中怎麼動、動多少，是動力學的問題，已經有不少實驗和分析在談，不是這篇要走的路。
+$$\nabla_w\Phi$$ 是模型給的。其中和 $$K_w$$ 有關的是 $$\nabla_w^2\sigma$$，$$\sigma(x;w)=\sigma(w^\top x)$$ 時就是 $$\sigma''(w^\top x)\,xx^\top$$，$$\sigma$$ 非線性時一般不為零；$$\delta w\neq0$$，$$\delta_wK$$ 就一般不為零。$$\sigma$$ 線性時這一項消失：只訓練 $$w$$ 的話，特徵動了，核卻可以不動。這個例外後面會再遇到。核會不會動，跟第 3 節是同一個答案：看 $$\delta w$$ 怎麼選。至於在訓練中怎麼動、動多少，是動力學的問題，已經有不少實驗和分析在談，不是這篇要走的路。
 
 把一路看到的整理成三種情形。三者都保留讀出的變分 $$\delta\mu=h\,\mu$$，差別在 $$\delta w$$，以及 $$\delta w$$ 帶來的核的變分 $$\delta_wK$$：
 
@@ -235,13 +235,15 @@ $$\nabla_w\Phi$$ 是模型給的，一般不為零；$$\delta w\neq0$$，$$\delt
 
 拿這張表去看 NTK 之後的研究，有一批工作在做同一件事：指認是哪個設定讓 $$\delta_wK$$ 消失。
 
-Chizat、Oyallon 與 Bach（[2019](https://arxiv.org/abs/1812.07956v5)）把網路輸出乘上一個大常數 $$\alpha$$。$$\alpha$$ 越大，權重只要動一點點，函數就能變很多；損失在權重還沒動到足以改變核之前就降下來了。他們把這叫 lazy training，摘要直說它「is due to a choice of scaling, often implicit」。這正是第 4 節最後看到的：權重動不動，由質量怎麼縮放決定。
+Chizat、Oyallon 與 Bach（[2019](https://arxiv.org/abs/1812.07956v5)）把網路輸出乘上一個大常數 $$\alpha$$。$$\alpha$$ 越大，權重只要動一點點，函數就能變很多；損失在權重還沒動到足以改變核之前就降下來了。他們把這叫 lazy training，摘要直說它「is due to a choice of scaling, often implicit」。他們在註腳裡也寫明，這種縮放「reflects that we work with the Euclidean metric」。這正是第 4 節最後看到的：權重動不動，由質量怎麼縮放、以及選哪個內積決定。
 
-Yang 與 Hu（[2021](https://arxiv.org/abs/2011.14522v3)）把這件事系統化。參數化是一整套規定：初始化的方差、乘在前面的係數、步長，各自是寬度的某個冪次。他們把其中穩定、而且不平凡的無窮寬極限做了分類：每一種極限要嘛特徵會動，要嘛是核梯度下降，「but not both」。這裡的核梯度下降指的是用固定的核。第 4 節的對偶顯示，每一步本來都是對當下的核做核梯度下降；所以二選一的對象不是核方法與特徵學習，而是核凍不凍結，「not both」照定義就成立。分類的內容在於哪些冪次落在哪一邊。這和第 4 節看到的一致：凍結 $$K$$ 不是推導給的，是參數化選出來的。他們也據此給出一套讓特徵在無窮寬下仍然會動的參數化。
+Yang 與 Hu（[2021](https://arxiv.org/abs/2011.14522v3)）把這件事系統化。參數化是一整套規定：初始化的方差、乘在前面的係數、步長，各自是寬度的某個冪次。他們把其中穩定、而且不平凡的無窮寬極限做了分類：每一種極限要嘛特徵會動，要嘛是核梯度下降，「but not both」。這裡的核梯度下降指的是用固定的核。第 4 節的對偶顯示，每一步本來都是對當下的核做核梯度下降；所以二選一的對象不是核方法與特徵學習，而是核凍不凍結。「not both」也不是照定義成立：他們的特徵學習看的是 embedding 會不會動，要從這裡推到核會變，需要 $$\sigma$$ 非線性，他們自己也指出線性時兩者可以並存。這一步就是本節開頭那條一階變分。至於落在哪一邊，由參數化的冪次決定：凍結 $$K$$ 不是推導給的，是參數化選出來的。他們也據此給出一套讓特徵在無窮寬下仍然會動的參數化。
 
 Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）換了一個旋鈕：初始化的大小。初始化大時，訓練停在核方法會選的那個解（第 5 節的最小範數解）；初始化小時，停在一個任何固定核都選不出來的解。第 5 節看到，核方法的解來自「選哪一個解」；這裡看到，這個選擇會隨設定改變。
 
 三篇放在一起看：縮放、參數化、初始化大小，每一個旋鈕都能把 $$\delta_wK$$ 消掉，反過來調，也都能把它放回來。$$\delta_wK$$ 消不消失，是選出來的。
+
+也有人持相反的看法。Liu、Zhu 與 Belkin（[2020](https://arxiv.org/abs/2010.01092v3)）主張核是常數是「associated to the model itself」，「neither due to a choice of a scaling of the model」；理由是 Hessian 的譜範數隨寬度以 $$1/\sqrt n$$ 消失，模型在一個固定半徑的球裡就是線性的。放回積分寫法，他們說的模型已經包含 $$1/\sqrt n$$ 的參數化，Hessian 小，來自每個原子的質量是 $$1/\sqrt n$$；那個球量的是參數的歐氏距離，也就是第 4 節選的內積。兩種說法指的是同一組設定，差別在於他們把它算進了模型。
 
 ## 8. 回頭看一遍
 
@@ -255,7 +257,9 @@ Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）換了一個旋�
 - **原文的核兩項都在。**$$w$$ 在動；核不動，靠的是參數化和步長。線性化把這個後果當成了前提。
 - **核會不會動，一階就看得出來。**後續研究指認的，是讓它不動的那些旋鈕。
 
-回頭看，這些零件沒有一個是新的。原始與對偶是 SVM 教科書的標準推導：先寫原始問題，直接走到對偶，核只在對偶那側出現。Chapelle（[2007](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf)）把兩側並排寫出來，$$X^\top X$$ 與 $$XX^\top$$ 給出同一個解，選哪一側只看哪個矩陣比較小。最小範數解、在當下參數做一階展開再解線性問題，也都是最佳化課本裡的東西。這篇做的只是把它們放回同一個積分式裡，看 NTK 的設定落在哪一格。
+回頭看，這些零件沒有一個是新的。原始與對偶是 SVM 教科書的標準推導：先寫原始問題，直接走到對偶，核只在對偶那側出現。Chapelle（[2007](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf)）把兩側並排寫出來，$$X^\top X$$ 與 $$XX^\top$$ 給出同一個解，選哪一側只看哪個矩陣比較小。最小範數解、在當下參數做一階展開再解線性問題，也都是最佳化課本裡的東西。核方法老早就在那裡了。
+
+所以問題從來不是核方法，而是 NTK 在忙什麼。它把一組設定的後果寫成了寬網路的性質；後續的研究再花好幾年，把縮放、參數化、初始化大小一個一個指認回來，中間還陸續給老東西換上新名字。這篇就是被這段繞路逼出來的：只用一階變分，把繞過的路攤平。
 
 ## 後記
 
@@ -263,7 +267,7 @@ Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）換了一個旋�
 
 走這一趟，順手翻了後續的文獻，心裡有點彆扭。一般想像中，一個研究題目有意思，大概是這幾種：系統性地把 benchmark 往前推；給出新的理解，解釋過去解釋不了的東西；或者找到過去的理解說不通的現象。
 
-NTK 之後有不少工作不在這三格裡。一種是做實驗確認核在訓練中會變，但核會不會變，一階變分就看得出來，看的是設定。這些實驗推翻的是流行的讀法，不是原文的數學；它們只對誤讀來說是新的。另一種是給已知的事取新名字：縮放決定特徵動不動，叫 lazy 和 rich；步長超過穩定上限時損失先衝高再掉下來，叫 [catapult](https://arxiv.org/abs/2003.02218v1)；「核凍不凍結」，被說成「核方法與特徵學習只能二選一」。
+NTK 之後有不少工作不在這三格裡。一種是做實驗確認核在訓練中會變，但核會不會變，一階變分就看得出來，看的是設定。這些實驗推翻的是流行的讀法，不是原文的數學；它們只對誤讀來說是新的。另一種是給已知的事取新名字：縮放決定特徵動不動，叫 lazy 和 rich；步長超過穩定上限時損失先衝高再掉下來，叫 [catapult](https://arxiv.org/abs/2003.02218v1)；把「核凍結」叫作 kernel gradient descent，讀起來就成了「核方法與特徵學習只能二選一」。
 
 誤讀流行一天，確認它的實驗就有一天的市場。
 
@@ -274,5 +278,6 @@ NTK 之後有不少工作不在這三格裡。一種是做實驗確認核在訓�
 - Chapelle, O. (2007). [Training a Support Vector Machine in the Primal](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf). Neural Computation, 19(5), 1155–1178.
 - Chizat, L., Oyallon, E., & Bach, F. (2019). [On Lazy Training in Differentiable Programming](https://arxiv.org/abs/1812.07956v5). NeurIPS 2019.
 - Yang, G., & Hu, E. J. (2021). [Feature Learning in Infinite-Width Neural Networks](https://arxiv.org/abs/2011.14522v3). ICML 2021.
+- Liu, C., Zhu, L., & Belkin, M. (2020). [On the linearity of large non-linear models: when and why the tangent kernel is constant](https://arxiv.org/abs/2010.01092v3). NeurIPS 2020.
 - Woodworth, B., Gunasekar, S., Lee, J. D., Moroshko, E., Savarese, P., Golan, I., Soudry, D., & Srebro, N. (2020). [Kernel and Rich Regimes in Overparametrized Models](https://arxiv.org/abs/2002.09277v3). COLT 2020.
 - Lewkowycz, A., Bahri, Y., Dyer, E., Sohl-Dickstein, J., & Gur-Ari, G. (2020). [The large learning rate phase of deep learning: the catapult mechanism](https://arxiv.org/abs/2003.02218v1).
