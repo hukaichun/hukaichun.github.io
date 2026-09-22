@@ -3,278 +3,249 @@ title: "兩個 δ"
 subtitle: "用一階變分重走一遍 NTK"
 date: 2026-09-21
 tags: [ntk, kernel-methods, calculus-of-variations, math]
-description: "〈Deep Learning 的無窮維煙花〉批評了 NTK 的設定，這篇想知道作者們在這條路上看到了什麼。不取極限，把寬網路寫成參數空間上的積分，只寫一階變分，一步一步看設定拿掉了什麼、留下了什麼。"
+description: "〈Deep Learning 的無窮維煙花〉批評 NTK 的結論是設定造成的，這篇沿著原文的推理，找出是哪一步走岔了。把網路寫成積分，只取一階變分：「權重不動」是配比混進位移的結果，kernel 裡的 feature 項一直都在。再拿這張地圖回看 2019 年之後的後續研究：吵了七年的 lazy 和 rich，是同一隻大象的不同部位。"
 ---
 
-[〈Deep Learning 的無窮維煙花〉](/posts/infinite-width-fireworks/)批評 NTK 的設定：$$1/\sqrt n$$ 加上固定步長，讓個別權重的更新隨寬度消失，「權重不動」是設定出來的。我們認為這個批評成立，但還是想知道作者們在這條路上究竟看到了什麼。
+## 一、前言
 
-原文透過逐層取極限逼近無窮寬，推導很長。要看設定做了什麼，也許不需要那套極限：有限寬網路本來就能寫成參數空間上的積分，只是測度是原子的；把測度放寬，就是無窮維的版本。這篇從這個積分形式出發，只寫一階變分，走一步看一步。
+在[〈Deep Learning 的無窮維煙花〉](/posts/infinite-width-fireworks/)裡，我們批評 NTK 的結論是設定造成的。但這個結論是怎麼一路推出來的？這篇想沿著原文的推理走一遍，找出是哪一步走岔了，讓設定被說成了網路的特性。
 
-## 1. 把網路寫成積分
+原文的符號繁瑣，推導冗長。不過用我們在小學三年級學到的微積分，就能把平行堆疊的無窮維函數寫成一個簡單的積分；再用我們在小學四年級學到的分析技巧，不必真的把積分算出來，就能拿掉積分符號，直接讀出結論。
 
-單隱藏層網路
+## 二、兩個 δ
 
-$$
-f(x;\theta)=\frac{1}{\sqrt n}\sum_{i=1}^{n} a_i\,\sigma(x;w_i)
-$$
+這一章只用一階變分。網路寫成積分之後，$$f$$ 的變動只有兩個來源：$$\delta w$$，feature mapping 在動；$$\delta\mu$$，配比在動。接下來分四步走：先把網路和損失函數寫成積分，再看最佳化條件裡 $$w$$ 還在不在，然後拿 NTK 的「權重不動」來對照，最後接回 kernel。一路上要盯著的，是這兩個 $$\delta$$ 各自怎麼被選，以及配比放在哪裡。
 
-對每個 $$n$$ 都可以寫成參數空間上的積分：
+### Step 1　函數平行堆疊的積分形式
 
-$$
-f(x)=\int_w \sigma(x;w)\,d\mu(w),\qquad \mu=\frac{1}{\sqrt n}\sum_{i=1}^{n} a_i\,\delta_{w_i}.
-$$
-
-歸一化係數和讀出權重都吸收進 $$\mu$$。$$\mu$$ 是帶號測度，但做 Jordan 分解 $$\mu=\mu^+-\mu^-$$、把符號併進參數 $$(s,w)$$，$$s\in\{\pm1\}$$，就可以取 $$\mu\ge0$$。有限寬是原子測度的特例；$$\mu$$ 取一般的測度，就是無窮維的版本。
-
-寫成這樣之後，眼前有兩個測度：參數上的 $$\mu$$，和資料上的 $$\rho$$。損失是
+網路是一堆函數並排加起來：
 
 $$
-L=\int_x \ell(f)\,d\rho.
+f(x;\theta)=\frac{1}{\sqrt n}\sum_{i=1}^{n} a_i\,\sigma(x;w_i).
 $$
 
-先不管動力學，也不管寬度怎麼趨近無限。只問一件事：這個 $$L$$ 動一下，會怎麼動？
-
-## 2. 動一下
+把歸一化係數和 $$a_i$$ 合起來，看成分配給 $$w_i$$ 的配比：
 
 $$
-\delta L=\int_x \frac{\partial\ell}{\partial f}\,\delta f\,d\rho .
+\frac{a_i}{\sqrt n}\;\longrightarrow\;d\mu(w_i),
 $$
 
-$$f$$ 同時依賴 $$\sigma(\cdot;w)$$ 裡的 $$w$$ 和測度 $$\mu$$，乘積法則給出兩項：
+就能改寫成積分：
 
 $$
-\delta f(x)=\int_w \nabla_w\sigma(x;w)\cdot\delta w\;d\mu(w)\;+\;\int_w \sigma(x;w)\;d\delta\mu(w).
+f(x)=\int_w \sigma(x;w)\,d\mu(w).
 $$
 
-兩項各有意思。第一項搬動質量：神經元在參數空間裡移動，也就是調特徵。第二項改變質量：每個神經元分到的權重增減，也就是調線性讀出。
+這裡的 $$\mu$$ 就是我們熟悉的測度。注意到這個一般形式不在乎歸一化係數具體怎麼設：可以是 $$1/\sqrt n$$，可以是 $$1/n$$，也可以是任何說得通的分佈，只要能加總，就能這樣寫。
 
-把 $$\delta f$$ 代回 $$\delta L$$，得到兩個雙重積分，外層對資料 $$x$$、內層對參數 $$w$$：
-
-$$
-\delta L=\int_x \frac{\partial\ell}{\partial f}(x)\left[\int_w \nabla_w\sigma(x;w)\cdot\delta w\;d\mu(w)\right]d\rho(x)
-\;+\;\int_x \frac{\partial\ell}{\partial f}(x)\left[\int_w \sigma(x;w)\;d\delta\mu(w)\right]d\rho(x).
-$$
-
-這樣寫，變分 $$\delta w$$、$$\delta\mu$$ 藏在內層。我們想看的是「往哪個方向動、$$L$$ 怎麼變」，所以把變分拉到外面：交換積分順序，先對 $$x$$ 積、再對 $$w$$ 積。$$\delta w(w)$$ 和 $$d\delta\mu(w)$$ 不依賴 $$x$$，可以提出內層：
+對於損失函數，我們也可以不失一般性地依樣畫葫蘆：
 
 $$
-\delta L=\int_w \left[\int_x \frac{\partial\ell}{\partial f}(x)\,\nabla_w\sigma(x;w)\,d\rho(x)\right]\cdot\delta w\;d\mu(w)
-\;+\;\int_w \left[\int_x \frac{\partial\ell}{\partial f}(x)\,\sigma(x;w)\,d\rho(x)\right]d\delta\mu(w).
+L=\int_x \ell(f)\,d\rho(x),
 $$
 
-方括號裡只剩 $$w$$ 的函數，給它們名字：
+其中 $$\rho$$ 代表資料 $$x$$ 的密度，或者你要叫它測度。
+
+### Step 2　一階變分下的最佳化條件：能不能拿掉 w
+
+有了這兩條表達，我們試著寫下 $$L$$ 這個泛函在 $$f$$ 附近的變動：
 
 $$
-g_w(w)=\int_x \frac{\partial\ell}{\partial f}\,\nabla_w\sigma(x;w)\,d\rho,\qquad
-g_\mu(w)=\int_x \frac{\partial\ell}{\partial f}\,\sigma(x;w)\,d\rho ,
+L[f+\delta f]-L[f]=\int_x \frac{\partial\ell}{\partial f}\,\delta f\,d\rho(x)+O(\delta f^2).
 $$
 
-於是
+這招就是我們在小學三年級物理課上學到的變分。
+
+$$f$$ 同時依賴 $$\sigma$$ 裡的 $$w$$ 和配比 $$\mu$$，乘積法則給出兩項：
 
 $$
-\delta L=\int_w g_w\cdot\delta w\;d\mu+\int_w g_\mu\;d\delta\mu .
+\delta f(x)=\int_w \frac{\partial\sigma}{\partial w}(x;w)\cdot\delta w\,d\mu(w)+\int_w \sigma(x;w)\,d\delta\mu(w).
 $$
 
-$$g_w$$、$$g_\mu$$ 都是殘差 $$\frac{\partial\ell}{\partial f}$$ 在資料測度 $$\rho$$ 下和特徵做內積：$$g_\mu(w)$$ 是殘差和第 $$w$$ 個特徵 $$\sigma(\cdot;w)$$ 的內積，$$g_w(w)$$ 是殘差和它的導數 $$\nabla_w\sigma(\cdot;w)$$ 的內積。資料只透過這兩個函數進到 $$\delta L$$ 裡。
+第一項對應的是 feature mapping 的變動，第二項對應的是配比的變動。
 
-有了 $$\delta L$$，可以先問最佳解長什麼樣子。不管用什麼方法走到那裡，最佳解都得滿足一個必要條件：往任何允許的方向動一下，$$L$$ 在一階都不變，也就是 $$\delta L=0$$ 對所有允許的變分成立。這是有限維「梯度為零」在這裡的版本。
-
-乍看 $$\delta L=\int_x \frac{\partial\ell}{\partial f}\,\delta f\,d\rho=0$$，容易讀成逐點的條件：每個 $$x$$ 上，不是 $$\frac{\partial\ell}{\partial f}=0$$，就是 $$\delta f=0$$。但 $$\delta f$$ 不能任意指定，它只能是模型動得到的方向，所以條件只要求殘差在 $$L^2(\rho)$$ 裡正交於這些方向。模型動得到的方向越少，這個條件越弱。
-
-哪些方向動得到，要看 $$(\delta w,\delta\mu)$$。兩者彼此獨立、各自可以任取，所以兩個係數要各自為零：
+把 $$\delta f$$ 代回去，交換積分順序，先對 $$x$$ 積：
 
 $$
-g_w=0\quad(\mu\text{-a.e.}),\qquad g_\mu=0 .
+\delta L=\int_w \underbrace{\left[\int_x \frac{\partial\ell}{\partial f}\,\frac{\partial\sigma}{\partial w}\,d\rho\right]}_{g_w(w)}\cdot\,\delta w\,d\mu+\int_w \underbrace{\left[\int_x \frac{\partial\ell}{\partial f}\,\sigma\,d\rho\right]}_{g_\mu(w)}\,d\delta\mu .
 $$
 
-殘差正交於搬動特徵的方向，也正交於調整讀出的方向。這是個不太意外的結果。比較值得停下來看的是另一件事：**$$w$$ 一直都在。**
+到目前為止，$$g_w$$ 還躺在式子裡。它跟寬度無關：不管 $$\mu$$ 是幾個點加起來、配比怎麼設，$$g_w$$ 都長這樣。這跟 NTK 說的對不上。
 
-## 3. w 去哪了
+仔細看 $$g_w$$：殘差 $$\frac{\partial\ell}{\partial f}$$ 乘上 $$\frac{\partial\sigma}{\partial w}$$，對資料積分。$$\frac{\partial\sigma}{\partial w}$$ 是 $$\sigma$$ 給的，只要 $$\sigma$$ 依賴 $$w$$，$$g_w$$ 一般而言就不為零。這代表 feature mapping 變動的貢獻就在那裡。
 
-NTK 流行的讀法是「寬網路的權重不動，所以等於固定特徵的核方法」。在上面的式子裡，要讓 $$w$$ 退場，得讓第一項消失。
+$$g_w$$ 是問題給的，乘在它旁邊的 $$\delta w$$ 則是可以任意設定的。
 
-第一項是導數乘位移：$$\nabla_w\sigma\cdot\delta w$$。導數是模型給的，$$\sigma(x;w)=\sigma(w^\top x)$$ 時就是 $$\sigma'(w^\top x)\,x$$，一般不為零，也跟寬度無關。位移是變分方向，由我們選。兩者在式子裡分得很清楚。
-
-那原文是怎麼走到「權重不動」的？回到有限寬的參數寫法。原文用梯度下降，位移直接取成步長乘梯度：
+假設 $$f$$ 是一個已經 train 好的類神經網路。仿造我們在小學三年級體育課學到的最小作用量原理：$$f$$ 是最佳，則一階變分為零：
 
 $$
-\delta w_i=-\eta\,\frac{\partial L}{\partial w_i}
-=-\eta\,\frac{a_i}{\sqrt n}\int_x \frac{\partial\ell}{\partial f}\,\nabla_w\sigma(x;w_i)\,d\rho
-=-\eta\,\frac{a_i}{\sqrt n}\,g_w(w_i).
+\delta L=\int_w g_w\cdot\delta w\,d\mu+\int_w g_\mu\,d\delta\mu=0 .
 $$
 
-這裡的 $$a_i/\sqrt n$$ 原本是讀出權重，也就是 $$\mu$$ 在 $$w_i$$ 上的質量。位移一旦取成梯度，這個質量就從 $$\mu$$ 跑到了位移身上：$$\eta$$ 固定、$$n\to\infty$$，每個 $$\delta w_i$$ 都是 $$O(n^{-1/2})$$。推導走得很順，但走順的原因是位移和梯度被當成了同一個東西，梯度小，看起來就是網路不動。
+要讓第一項為零，有兩條路：
 
-在積分寫法裡，這三樣東西各在各的位置：$$\nabla_w\sigma$$ 是 $$O(1)$$，$$1/\sqrt n$$ 在 $$\mu$$ 裡，$$\delta w$$ 還沒被指定。第一項要消失，$$\sigma$$ 幫不上忙，只能設定 $$\delta w=0$$。
+- $$\delta w$$ 任取。那麼只能 $$g_w=0$$，這時才能拿掉積分符號。
+- 設定 $$\delta w=0$$。這一項直接消失，$$g_w$$ 不受任何約束。
 
-設定之後，駐點條件只剩 $$g_\mu=0$$，恰好是固定特徵 $$\sigma(\cdot;w)$$ 上線性讀出的最優條件。
+這代表 $$\delta w$$ 任選、feature mapping 的變動卻不提供貢獻，只有在一階變分為零的情況下才會出現。
 
-這和〈無窮維煙花〉在步長上看到的是同一件事，換成了變分的語言：**$$\delta w$$ 是選的，$$\nabla_w\sigma$$ 才是 $$\sigma$$ 給的。**把位移取成梯度也是一種選法，它藏著什麼，下一節會看到。
+第二項同理。兩項都任取，得到 $$g_w=0,\ g_\mu=0$$；設定 $$\delta w=0$$，只剩 $$g_\mu=0$$，也就是固定 feature mapping、只調配比的最佳條件。
 
-不過到這裡還沒看到核。$$g_\mu=0$$ 是一個正交條件，不是一個核。核是從哪一步冒出來的？
+### Step 3　比對 NTK 的結論與變分方法下的對應
 
-## 4. 核在哪裡出現
+NTK 的結論是：網路夠寬，權重幾乎不動，訓練等同固定 feature mapping。照 Step 2，要讓 feature mapping 的變動不提供貢獻，要嘛走到一階變分為零，要嘛設定 $$\delta w=0$$。原文兩者都沒做，那「不動」是從哪來的？
 
-$$\delta L$$ 對 $$(\delta w,\delta\mu)$$ 是線性泛函，要談最速下降，先得有內積。一般測度上沒有現成的 $$L^2$$ 內積，所以限制 $$\delta\mu=h\,\mu$$，只允許按比例增減已有的質量。這樣 $$\delta w$$ 與 $$h$$ 都是 $$w$$ 上的函數、都對 $$\mu$$ 積分，可以用同一個 $$L^2(\mu)$$：
-
-$$
-\delta L=\langle g_w,\delta w\rangle_{L^2(\mu)}+\langle g_\mu,h\rangle_{L^2(\mu)} ,
-$$
-
-最速下降方向是 $$\delta w=-\eta\,g_w$$、$$h=-\eta\,g_\mu$$。代回 $$\delta f$$，展開 $$g_w,g_\mu$$：
+回到 Step 2 裡 $$w$$ 的那一項：
 
 $$
-\delta f(x)=-\eta\int_{x'}K(x,x')\,\frac{\partial\ell}{\partial f}(x')\,d\rho(x'),\qquad K=K_w+K_\mu,
+\delta L_w=\int_w g_w\cdot\delta w\,d\mu .
+$$
+
+原文用的是求和的寫法。把 $$\mu$$ 的原子展開，同一個 $$\delta L_w$$ 就寫成
+
+$$
+\delta L_w=\sum_{i=1}^{n} m_i\,g_w(w_i)\cdot\delta w_i ,\qquad m_i=\frac{a_i}{\sqrt n}.
+$$
+
+兩種寫法完全相等，差別在「梯度」指的是 $$\delta w$$ 前面的哪個係數：
+
+- 積分寫法：係數是 $$g_w$$。配比留在 $$d\mu$$ 裡，梯度就是對 $$\rho$$ 的積分，跟寬度無關。
+- 求和寫法：係數是 $$m_i\,g_w(w_i)$$，也就是 $$\frac{\partial L}{\partial w_i}$$。配比從 $$d\mu$$ 被拿出來，併進了係數。
+
+原文用梯度下降，位移取成步長乘上求和寫法的係數：
+
+$$
+\delta w_i=-\eta\,\frac{a_i}{\sqrt n}\,g_w(w_i).
+$$
+
+$$\eta$$ 固定，$$n$$ 越大，$$\delta w_i$$ 越小。
+
+配比就這樣跟著係數，從 $$d\mu$$ 跑進了 $$\delta w$$。$$g_w$$ 從頭到尾沒有變；$$\delta w$$ 本來可以任意設定，這裡被這個選擇綁上了 $$1/\sqrt n$$。權重不動，是這個選擇的結果，不是 $$g_w$$ 消失了。
+
+Step 1 說過，歸一化係數怎麼設都行。換成 $$1/n$$，梯度帶上 $$1/n$$；步長跟著放大 $$n$$ 倍，$$\delta w_i=-\eta\,a_i\,g_w(w_i)$$，跟寬度無關，權重就動起來了。同一個網路、同一個 $$g_w$$，feature mapping 變動的貢獻就看配比怎麼設。
+
+到目前為止，我們還找不到理由排除 feature mapping 變動的貢獻。單從梯度下降的角度看，「權重不動」幾乎和我們在前文的批評一樣，已經被判了死刑。
+
+### Step 4　連接回 kernel
+
+接著我們更進一步，連接回 kernel，去找 NTK 的重頭戲：tangent kernel。
+
+回到 Step 2 的 $$\delta L$$。$$\delta w$$ 和 $$\delta\mu$$ 可以任意設定，那就挑最省事的：照我們在小學五年級學到的梯度下降，沿著 $$g_w$$、$$g_\mu$$ 的反方向走，
+
+$$
+\delta w=-\eta\,g_w,\qquad d\delta\mu=-\eta\,g_\mu\,d\mu .
+$$
+
+代回 $$\delta f$$，把 $$g_w$$、$$g_\mu$$ 展開：
+
+$$
+\delta f(x)=-\eta\int_{x'}K(x,x')\,\frac{\partial\ell}{\partial f}(x')\,d\rho(x'),
 $$
 
 $$
-K_w(x,x')=\int_w\nabla_w\sigma(x;w)\cdot\nabla_w\sigma(x';w)\,d\mu(w),\qquad
-K_\mu(x,x')=\int_w\sigma(x;w)\,\sigma(x';w)\,d\mu(w).
+K(x,x')=\underbrace{\int_w\frac{\partial\sigma}{\partial w}(x;w)\cdot\frac{\partial\sigma}{\partial w}(x';w)\,d\mu}_{K_{\delta w}}+\underbrace{\int_w\sigma(x;w)\,\sigma(x';w)\,d\mu}_{K_{\delta\mu}}.
 $$
 
-核出現了，是函數空間裡對 $$K$$ 做的梯度下降。兩項都在：$$K_w$$ 來自 $$\delta w$$，$$K_\mu$$ 來自 $$\delta\mu$$。
+kernel 就這樣冒出來了，兩項都在：$$K_{\delta w}$$ 來自 feature mapping 的變動，$$K_{\delta\mu}$$ 來自配比的變動。
 
-這個核和第 2 節交換積分順序是同一件事的兩面。把兩種特徵合寫成 $$\Phi(x,w)=(\sigma(x;w),\,\nabla_w\sigma(x;w))$$，同一個 $$\Phi$$ 有兩種積法：
+現在回到 NTK 的說法：權重不動，feature 側沒有貢獻。在 kernel 上，這句話就是 $$K_{\delta w}$$ 消失。
 
-$$
-K(x,x')=\int_w \Phi(x,w)\cdot\Phi(x',w)\,d\mu(w),\qquad
-G(w,w')=\int_x \Phi(x,w)\,\Phi(x,w')^{\top}\,d\rho(x).
-$$
-
-對 $$\mu$$ 積，得到資料上的核 $$K$$，它決定函數怎麼動；對 $$\rho$$ 積，得到參數上的算子 $$G$$，它決定參數怎麼動，包括 $$\delta w$$，也就是特徵怎麼動。有限維時這就是 $$JJ^\top$$ 與 $$J^\top J$$，非零譜相同。同一步更新，從參數那側看是在學特徵，從函數那側看是核梯度下降。
-
-所以學特徵和核方法並不互斥：每一步都在學特徵，每一步也都是對當下的核 $$K_t$$ 做核梯度下降。特徵學習表現為核隨時間改變。要分清楚的是，每一步都是核梯度下降，不代表最後的解是某個核方法的解。整條軌跡用的是一串不同的核，得到的 $$f_T$$ 不是單一 RKHS 裡代表定理給出的那個解。
-
-這裡的 $$\delta w=-\eta\,g_w$$ 可以和第 3 節對照。原文在參數空間用歐氏內積，得到 $$\delta w_i=-\eta\,(a_i/\sqrt n)\,g_w(w_i)$$，質量掛在位移上；這裡用 $$L^2(\mu)$$，質量被內積吸收，每個神經元的位移是 $$O(1)$$。「位移等於梯度」要先選定內積才有意義。
-
-但質量沒有消失，它移到了 $$\delta f$$ 裡。$$K_w$$、$$K_\mu$$ 都對 $$\mu$$ 積分，而 $$1/\sqrt n$$ 縮放下 $$\mu$$ 的總質量是 $$\sum_i\lvert a_i\rvert/\sqrt n\sim\sqrt n$$。要讓 $$\delta f$$ 保持有限，$$\eta$$ 得跟著縮 $$1/\sqrt n$$，每個神經元的位移又回到 $$O(n^{-1/2})$$。換內積只是把這筆帳從位移搬到步長。真正決定權重動不動的，是 $$\mu$$ 的質量怎麼隨 $$n$$ 縮放，也就是參數化。
-
-回頭數一下，為了走到這裡做了哪些選擇：
-
-- **內積是選的。**給 $$\delta w$$ 與 $$\delta\mu$$ 各配一個權重，核就變成 $$c_1K_w+c_2K_\mu$$；換別的度量，形狀也跟著變。
-- **$$\delta\mu=h\,\mu$$ 只能重新分配已有的質量。**$$\mu$$ 為零的地方生不出質量。
-- **$$K$$ 依賴當下的 $$\mu$$ 與 $$w$$。**要得到整個訓練只用同一個核的核方法，還得把 $$K$$ 凍結在初始值。這一步推導本身沒有給。
-
-變分條件本身不給核，核跟著選擇一起出現。這個模式在有限維裡應該也看得到，拿最熟悉的例子對一下。
-
-## 5. 回頭看線性模型
-
-$$f(x)=\phi(x)^\top\beta$$，資料 $$x_1,\dots,x_N$$，設計矩陣 $$\Phi\in\mathbb R^{N\times P}$$。平方損失的一階條件是
+對照 Jacot 等人的 Theorem 1，極限核的遞迴是
 
 $$
-\Phi^\top(\Phi\beta-Y)=0 ,
+\Theta^{(L+1)}=\Theta^{(L)}\,\dot\Sigma^{(L+1)}+\Sigma^{(L+1)} .
 $$
 
-它只說殘差正交於特徵，不推出 $$\beta\in\operatorname{span}\{\phi(x_j)\}$$。$$P>N$$ 時 $$\beta$$ 加上 $$\ker\Phi$$ 裡的任何向量都滿足同一個條件，卻會改變新點上的預測。核的結構來自**選哪一個解**：加 ridge、取最小範數，或從 $$0$$ 出發做梯度下降。選定之後 $$\beta=\Phi^\top c$$，預測只透過 $$k(x,x')=\phi(x)^\top\phi(x')$$ 依賴 $$\phi$$，這就是核方法。
+兩層時，$$\Sigma^{(2)}$$ 對應 $$K_{\delta\mu}$$，$$\Theta^{(1)}\dot\Sigma^{(2)}$$ 對應 $$K_{\delta w}$$。$$K_{\delta w}$$ 還在。
 
-果然是同一個模式：一階條件給正交，核來自額外的選擇。
+權重不動，feature 那一項卻留在 kernel 裡。這兩件事要怎麼同時成立？手上已經有兩條線索。
 
-把第 1 節的網路寫成這個形式：固定 $$w_i$$、只動讀出，特徵是 $$\phi(x)=(\sigma(x;w_i))_i$$，得到的核是 $$K_\mu$$。$$w_i$$ 也動的話，Jacobian 分成兩塊 $$J=[\,J_a\;J_w\,]$$，$$JJ^\top=J_aJ_a^\top+J_wJ_w^\top$$，對應 $$K_\mu+K_w$$。
+第一條來自 Step 2。kernel 要 non-trivial，代表 $$\frac{\partial\sigma}{\partial w}$$ 不能消失。它是 $$\sigma$$ 給的，不帶配比，寬度再大也不會讓它變小；對資料積分得到的 $$g_w$$ 也一樣。
 
-走到這裡，手上有一個預期：如果「權重不動」是對的，NTK 應該只剩 $$K_\mu$$。可以翻開原文對一下了。
-
-## 6. 原文的核長什麼樣
-
-Jacot 等人（[2018](https://arxiv.org/abs/1806.07572v4)）的 Theorem 1 給出極限核的遞迴
+第二條來自 Step 3。原文的位移帶著配比，$$\delta w_i=-\eta\,m_i\,g_w(w_i)$$。這個選擇就寫在原文定義 NTK 的那一行：
 
 $$
-\Theta^{(L+1)}_\infty=\Theta^{(L)}_\infty\,\dot\Sigma^{(L+1)}+\Sigma^{(L+1)} .
+\Theta^{(L)}(\theta)=\sum_{p=1}^{P}\partial_{\theta_p}F^{(L)}(\theta)\otimes\partial_{\theta_p}F^{(L)}(\theta),
 $$
 
-在兩層的情形，$$\Sigma^{(2)}$$ 對應讀出那一項 $$K_\mu$$，$$\Theta^{(1)}\dot\Sigma^{(2)}$$ 對應特徵那一項 $$K_w$$。兩邊的數值不完全相同：原文在參數上用歐氏內積，讀出那塊是 $$\frac1n\sum_i\sigma(x;w_i)\,\sigma(x';w_i)$$；我們在 $$L^2(\mu)$$ 下是 $$\int_w\sigma\,\sigma\,d\mu$$。權重的差別來自第 4 節選的內積，結構則相同：一項來自 $$\delta\mu$$，一項來自 $$\delta w$$。NTK 兩項都在。
+其中 $$\partial_{\theta_p}F$$ 是網路輸出對第 $$p$$ 個參數的偏導，$$\otimes$$ 是在兩個資料點上相乘。前一句是「For ANNs trained using gradient descent」：位移取成每個參數自己的偏導數，每個參數等權重相加。
 
-這和預期不同。「權重不動」的讀法對應 $$\delta w=0$$，核是 $$K_\mu$$，也就是隨機特徵；原文的核卻保留了 $$\delta w$$ 的貢獻。在積分表示裡，$$\delta w=0$$ 和 $$K_w$$ 還在，兩者沒辦法同時成立。照原文的核，$$w$$ 在動。核在訓練中保持不變，靠的是第 3 節那一步：位移取成梯度，每個 $$w_i$$ 只動 $$O(n^{-1/2})$$，個別特徵的變化在極限裡消失。原文的 Remark 4 自己也這樣說：個別 activation 的變化隨寬度縮小，「However their collective variation is significant」；$$\Sigma$$ 那項是最後一層的學習，另一項是下面各層的學習。
+兩條線索合起來，答案就出來了。$$\frac{\partial\sigma}{\partial w}$$ 和 $$g_w$$ 都不帶配比，不會消失；位移之所以趨於零，是因為配比被混進了位移。每個 $$\delta w_i$$ 帶著 $$1/\sqrt n$$，這是「權重不動」的來源。
 
-Lee 等人（[2019](https://arxiv.org/abs/1902.06720v4)）在 Jacot 之後，把「參數只動一點點」當成出發點，原文說「This small motion of the parameters is crucial to the effect we present」。他們把網路換成它在初始參數的一階 Taylor 展開：
+所以「權重不動」不是網路的性質，是把配比混進位移的結果。把配比放回 $$d\mu$$，只要總質量不發散，每個 $$w$$ 的位移就是 $$-\eta\,g_w$$，和寬度無關。$$K_{\delta w}$$ 一直留在原文的 kernel 裡，feature 側從來沒有停止貢獻。
 
-$$
-f^{\rm lin}(x)=f_0(x)+\nabla_\theta f_0(x)\,(\theta-\theta_0).
-$$
+## 三、同一隻大象
 
-用積分寫，就是把第 2 節的 $$\delta f$$ 直接當成模型：
+第二章走完，NTK 的現象在變分下很平凡：配比混進了位移，個別權重看起來不動；feature 那一項一直留在 kernel 裡。手上有了這張地圖，這一章拿它去看 2019 年之後的後續研究。這些研究各自從一個角度切進來，指認一個旋鈕，也各自摸到了一塊。先看它們說了什麼、吵了什麼，最後再把整隻拿出來。
 
-$$
-f^{\rm lin}(x)=f_0(x)+\int_w\nabla_w\sigma(x;w)\cdot\delta w\;d\mu_0+\int_w\sigma(x;w)\;d\delta\mu ,
-$$
+**凍結的 kernel 夠不夠用。**第一批工作把凍結當成工具，旋鈕是「讓權重留在初始值附近」。Du 等人（[2019](https://arxiv.org/abs/1810.02054v2)）證明過參數化網路的梯度下降會收斂到全域最小，關鍵是「over-parameterization and random initialization jointly restrict every weight vector to be close to its initialization」；Allen-Zhu 等人（[2019](https://arxiv.org/abs/1811.03962v5)）在初始值附近證明了網路和 NTK 等價。Arora 等人（[2019](https://arxiv.org/abs/1904.11955v2)）直接算出卷積網路的無窮寬 kernel，在 CIFAR-10 上拿到 77.43%，但離對應的 CNN 還差 5% 到 6%，他們自己說 NTK regime「cannot fully explain the success of neural networks yet」。Fort 等人（[2020](https://arxiv.org/abs/2010.15110v1)）量了訓練中的 NTK：前兩三個 epoch 它變得很快，「learning useful features from the training data」。Lee 等人（[2020](https://arxiv.org/abs/2007.15801v2)）發現 weight decay 和大學習率會「break the correspondence between finite and infinite networks」。
 
-$$\sigma$$ 與 $$\nabla_w\sigma$$ 停在初始值，$$\delta w$$、$$\delta\mu$$ 則當作有限大小的未知數。這是一個線性模型，特徵是 $$(\sigma,\nabla_w\sigma)$$。接下來由第 5 節，線性模型就是核方法，核是 $$K_\mu+K_w$$。這一段沒有用到任何關於神經網路的事。
+**凍結從哪裡來。**這一批工作各自指認一個旋鈕。Lee 等人（[2019](https://arxiv.org/abs/1902.06720v4)）指認寬度，「rather than the particular parameterization」，但附錄寫明兩種參數化要配上逐層調整的學習率才等價。Chizat、Oyallon 與 Bach（[2019](https://arxiv.org/abs/1812.07956v5)）指認輸出的縮放：凍結「is due to a choice of scaling, often implicit」，他們把它命名為 lazy regime，實驗顯示這個 regime 下的 CNN 表現變差。Yang 與 Hu（[2021](https://arxiv.org/abs/2011.14522v3)）指認參數化，也就是初始化方差、前乘係數、學習率各自隨寬度的冪次：標準參數化和 NTK 參數化「do not admit infinite-width limits that can learn features」，換成他們的 μP 才學得到；並且把二分寫成定理，每一種參數化「either admits feature learning or is in kernel regime, but not both」。一年後，μP 成了調大模型超參數的工具（[Yang 等人 2022](https://arxiv.org/abs/2203.03466v2)），理由之一是它讓每個參數「not stuck at initialization」。Yang 與 Littwin（[2023](https://arxiv.org/abs/2308.01814v2)）指認優化器：換成 Adam，二分仍然成立，只是 kernel 換成非線性的算子。
 
-跟神經網路有關的，只剩「為什麼可以換成一階展開」的論證（Lee 等人 Theorem 2.1）：學習率固定且小於臨界值，參數的總位移就有界；NTK 參數化又讓 Jacobian 的 Lipschitz 常數帶著 $$n^{-1/2}$$。兩者相乘，Jacobian 在訓練中幾乎不變。這兩個條件，一個是步長慣例，一個是參數化，正是第 3 節讓位移帶上 $$1/\sqrt n$$ 的那兩樣東西。
+**兩個 regime 之間。**這一批工作轉一個旋鈕，看網路從一端走到另一端。Geiger 等人（[2019](https://arxiv.org/abs/1906.08034v4)）轉的是輸出的縮放 $$\alpha$$，發現分界在 $$\alpha^{\ast}\sim1/\sqrt h$$，$$h$$ 是寬度。Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）轉的是初始化的大小，它「controls the transition between the "kernel" (aka lazy) and "rich" (aka active) regimes」。Lewkowycz 等人（[2020](https://arxiv.org/abs/2003.02218v1)）轉的是學習率：學習率夠大，kernel 就會動，「even at large width」。Kunin 等人（[2024](https://arxiv.org/abs/2406.06158v2)）轉的是層與層之間的相對尺度。
 
-所以線性化並不是對「權重為什麼不動」的解釋。它把 Jacot 設定的後果當成前提，再用同一組設定證明這個前提成立。第 3 節看到位移和梯度被當成同一個東西；到了這裡，「權重不動」這個設定的後果，又被當成了寬網路本身的性質。
+**kernel 怎麼動。**另一批工作接受 kernel 會動，去描述它怎麼動：自洽的場論（[Bordelon 與 Pehlevan 2022](https://arxiv.org/abs/2205.09653v3)）、一步梯度就長出的 spike（[Ba 等人 2022](https://arxiv.org/abs/2205.01445v1)）、average gradient outer product（[Radhakrishnan 等人 2024](https://arxiv.org/abs/2212.13881v3)）。Atanasov 等人（[2021](https://arxiv.org/abs/2111.00034v2)）發現，rich regime 訓練出來的網路，最後等價於「a kernel regression solution with the final network's tangent kernel」。
 
-## 7. 帶著這張地圖看後續
+到了 2025 年，二分還在。有人說它太簡化，「this simple lazy–rich dichotomy overlooks a diverse underlying taxonomy of feature learning」（[Chou 等人 2025](https://arxiv.org/abs/2503.18114v2)）；有人論證在持續學習裡，寬度只有在「reduces the amount of feature learning, yielding more laziness」時才有好處（[Graldi 等人 2025](https://arxiv.org/abs/2506.16884v1)）。
 
-還剩一個問題：核 $$K$$ 是在當下的 $$w$$ 上算的，$$w$$ 動了，核會不會跟著動？
+七年下來，每一篇都摸到了一塊：寬度、縮放、參數化、初始化、層間比例、學習率、優化器。「kernel 和 feature learning 是兩個 regime」這個框架，一直沒有人拆。Yang 與 Hu 在正文裡還留下一句：「It may seem somewhat puzzling how the NTK limit induces change in f without feature or feature kernel evolution」。
 
-這不需要動力學，對 $$K$$ 本身取一階變分就看得到。$$K$$ 透過 $$\Phi(\cdot;w)=(\sigma,\nabla_w\sigma)$$ 依賴 $$w$$：
+現在把整隻大象拿出來。它就是 Step 2 的那條式子，配上 Step 4 的 kernel：
 
 $$
-\delta_w K(x,x')=\int_w\Big[\big(\nabla_w\Phi(x;w)\,\delta w\big)\cdot\Phi(x';w)+\Phi(x;w)\cdot\big(\nabla_w\Phi(x';w)\,\delta w\big)\Big]\,d\mu(w).
+\delta f(x)=\int_w \frac{\partial\sigma}{\partial w}(x;w)\cdot\underbrace{\delta w}_{\text{②}}\,\underbrace{d\mu(w)}_{\text{①}}+\int_w \sigma(x;w)\,d\delta\mu(w),
+\qquad
+K_{\delta w}(x,x')=\int_w \underbrace{\frac{\partial\sigma}{\partial w}(x;w)\cdot\frac{\partial\sigma}{\partial w}(x';w)}_{\text{③}}\,d\mu(w).
 $$
 
-$$\delta\mu$$ 也會改變 $$K$$，但它只重新加權同一組特徵，張成的函數空間不變；特徵本身換掉，只來自 $$\delta w$$。所以這裡只看 $$\delta_wK$$。
+① 是配比的尺度，② 是位移怎麼選，③ 是 $$\frac{\partial\sigma}{\partial w}$$ 在哪裡取值，初始值還是當下。每一個旋鈕都落在這三塊之一：
 
-$$\nabla_w\Phi$$ 是模型給的。其中和 $$K_w$$ 有關的是 $$\nabla_w^2\sigma$$，$$\sigma(x;w)=\sigma(w^\top x)$$ 時就是 $$\sigma''(w^\top x)\,xx^\top$$，$$\sigma$$ 非線性時一般不為零；$$\delta w\neq0$$，$$\delta_wK$$ 就一般不為零。$$\sigma$$ 線性時這一項消失：只訓練 $$w$$ 的話，特徵動了，核卻可以不動。這個例外後面會再遇到。核會不會動，跟第 3 節是同一個答案：看 $$\delta w$$ 怎麼選。至於在訓練中怎麼動、動多少，是動力學的問題，已經有不少實驗和分析在談，不是這篇要走的路。
+| 研究 | 旋鈕 | 落在哪一塊 |
+|---|---|---|
+| Du；Allen-Zhu；Arora（CNTK）；Lee 2019 的線性化 | 權重留在初始值附近 | ③ 停在初始值 |
+| Lee 2019 | 寬度、逐層學習率 | ① 和 ② 的相對大小 |
+| Chizat；Geiger | 輸出縮放 $$\alpha$$ | ①，分界 $$\alpha^{\ast}\sim1/\sqrt h$$ 正是 $$1/\sqrt n$$ 的配比 |
+| Yang–Hu；μTransfer | 參數化的冪次 | ① 和 ② 隨寬度的冪次 |
+| Yang–Littwin | 優化器 | ② |
+| Woodworth；Kunin | 初始化大小、層間比例 | ① 的初始值 |
+| Lewkowycz；Lee 2020 | 學習率 | ② |
+| Fort；Atanasov；Bordelon；Ba；Radhakrishnan | kernel 怎麼動 | ③ 在當下取值時的軌跡 |
 
-把一路看到的整理成三種情形。三者都保留讀出的變分 $$\delta\mu=h\,\mu$$，差別在 $$\delta w$$，以及 $$\delta w$$ 帶來的核的變分 $$\delta_wK$$：
-
-| | $$\delta w$$ | $$\delta_w K$$ | 核 | 對應 |
-|---|---|---|---|---|
-| (i) | $$=0$$ | $$=0$$ | $$K_\mu$$ | 隨機特徵；「權重不動」的讀法 |
-| (ii) | $$\neq0$$ | 設為 $$0$$ | $$K_w+K_\mu$$，停在 $$w_0$$ | NTK；Lee 的線性化 |
-| (iii) | $$\neq0$$ | $$\neq0$$ | $$K_w+K_\mu$$，隨 $$w_t$$ 改變 | feature learning |
-
-寫成 $$\delta f$$：
-
-- (i) 只剩讀出那一項：$$\delta f=\int_w\sigma(\cdot;w)\,d\delta\mu$$。$$\Phi$$ 沒動，$$\delta_wK=0$$ 自動成立。
-- (ii) 兩項都在，但特徵停在初始值：$$\delta f=\int_w\nabla_w\sigma(\cdot;w_0)\cdot\delta w\,d\mu_0+\int_w\sigma(\cdot;w_0)\,d\delta\mu$$。$$\delta w\neq0$$，照上面的變分 $$\delta_wK$$ 一般不為零；這裡是把它設成零。
-- (iii) 兩項都在，特徵在當下的 $$w_t$$ 取值：$$\delta f=\int_w\nabla_w\sigma(\cdot;w_t)\cdot\delta w\,d\mu_t+\int_w\sigma(\cdot;w_t)\,d\delta\mu$$，$$\delta_wK$$ 由上式給出。
-
-(ii) 和 (iii) 的 $$\delta w$$ 一樣不為零，只差在 $$\delta_wK$$。$$\delta w\neq0$$ 而核不動，只能是設定。
-
-拿這張表去看 NTK 之後的研究，有一批工作在做同一件事：指認是哪個設定讓 $$\delta_wK$$ 消失。
-
-Chizat、Oyallon 與 Bach（[2019](https://arxiv.org/abs/1812.07956v5)）把網路輸出乘上一個大常數 $$\alpha$$。$$\alpha$$ 越大，權重只要動一點點，函數就能變很多；損失在權重還沒動到足以改變核之前就降下來了。他們把這叫 lazy training，摘要直說它「is due to a choice of scaling, often implicit」。他們在註腳裡也寫明，這種縮放「reflects that we work with the Euclidean metric」。這正是第 4 節最後看到的：權重動不動，由質量怎麼縮放、以及選哪個內積決定。
-
-Yang 與 Hu（[2021](https://arxiv.org/abs/2011.14522v3)）把這件事系統化。參數化是一整套規定：初始化的方差、乘在前面的係數、步長，各自是寬度的某個冪次。他們把其中穩定、而且不平凡的無窮寬極限做了分類：每一種極限要嘛特徵會動，要嘛是核梯度下降，「but not both」。這裡的核梯度下降指的是用固定的核。第 4 節的對偶顯示，每一步本來都是對當下的核做核梯度下降；所以二選一的對象不是核方法與特徵學習，而是核凍不凍結。「not both」也不是照定義成立：他們的特徵學習看的是 embedding 會不會動，要從這裡推到核會變，需要 $$\sigma$$ 非線性，他們自己也指出線性時兩者可以並存。這一步就是本節開頭那條一階變分。至於落在哪一邊，由參數化的冪次決定：凍結 $$K$$ 不是推導給的，是參數化選出來的。他們也據此給出一套讓特徵在無窮寬下仍然會動的參數化。
-
-Woodworth 等人（[2020](https://arxiv.org/abs/2002.09277v3)）換了一個旋鈕：初始化的大小。初始化大時，訓練停在核方法會選的那個解（第 5 節的最小範數解）；初始化小時，停在一個任何固定核都選不出來的解。第 5 節看到，核方法的解來自「選哪一個解」；這裡看到，這個選擇會隨設定改變。
-
-三篇放在一起看：縮放、參數化、初始化大小，每一個旋鈕都能把 $$\delta_wK$$ 消掉，反過來調，也都能把它放回來。$$\delta_wK$$ 消不消失，是選出來的。
-
-## 8. 回頭看一遍
-
-把走過的路從頭排一次：
-
-- **積分形式。**有限寬網路就是原子測度，放寬測度就是無窮維版本，沒有引進新的模型。
-- **一階變分有兩項。**$$\delta w$$ 搬動特徵，$$\delta\mu$$ 調整讀出。$$\delta L=0$$ 是正交條件，不是逐點條件。
-- **權重不動是選的。**$$\nabla_w\sigma$$ 是模型給的，$$\delta w$$ 是我們選的。原文把位移取成梯度，$$\mu$$ 的質量 $$1/\sqrt n$$ 就掛到了位移上。
-- **核在選定內積之後才出現。**$$K$$ 與 $$G$$ 是同一個 $$\Phi$$ 的兩種積法，每一步都是對當下的核做核梯度下降；學特徵和核方法不互斥，互斥的是核凍不凍結。
-- **線性模型的核來自選哪一個解。**一階條件只給正交。
-- **原文的核兩項都在。**$$w$$ 在動；核不動，靠的是參數化和步長。線性化把這個後果當成了前提。
-- **核會不會動，一階就看得出來。**後續研究指認的，是讓它不動的那些旋鈕。
-
-回頭看，這些零件沒有一個是新的。原始與對偶是 SVM 教科書的標準推導：先寫原始問題，直接走到對偶，核只在對偶那側出現。Chapelle（[2007](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf)）把兩側並排寫出來，$$X^\top X$$ 與 $$XX^\top$$ 給出同一個解，選哪一側只看哪個矩陣比較小。最小範數解、在當下參數做一階展開再解線性問題，也都是最佳化課本裡的東西。核方法老早就在那裡了。
-
-所以問題從來不是核方法，而是 NTK 在忙什麼。它把一組設定的後果寫成了寬網路的性質；後續的研究再花好幾年，把縮放、參數化、初始化大小一個一個指認回來，中間還陸續給老東西換上新名字。這篇就是被這段繞路逼出來的：只用一階變分，把繞過的路攤平。
+結論只有一句：只要 kernel 裡有 $$K_{\delta w}$$，feature learning 就有貢獻。所有的旋鈕，調的都是 $$K_{\delta w}$$ 的貢獻有多大，或者它停在哪裡；沒有一個能在訓練進行時把它拿掉，除非直接設定 $$\delta w=0$$。Yang 與 Hu 的困惑，來自配比混進了位移：這樣一來，只看得到每個權重幾乎不動。把配比放回 $$d\mu$$，$$f$$ 的變化就是 $$K_{\delta w}$$ 作用在殘差上，沒有什麼好困惑的。吵了七年的兩個 regime，是這三塊的不同設定，不是網路的兩種性質。
 
 ## 後記
 
-開頭問作者們看到了什麼。能回答的只有原文寫下的東西：原文的核比流行的讀法多一項 $$K_w$$，$$w$$ 在動，而定理成立的條件讓核不動。定理沒有錯；它說的是那組設定，不是網路本身。
+前言問，作者們在這條路上看到了什麼。能回答的只有原文寫下的東西：他們的 kernel 裡寫著 $$K_{\delta w}$$，feature 一直有貢獻。「權重不動」是配比混進位移的結果，原文自己在 Remark 1 也說，$$1/\sqrt n$$ 的「side-effect」是讓權重的影響大幅變小，實驗時再用學習率 1.0 去補回來。
 
-走這一趟，順手翻了後續的文獻，心裡有點彆扭。一般想像中，一個研究題目有意思，大概是這幾種：系統性地把 benchmark 往前推；給出新的理解，解釋過去解釋不了的東西；或者找到過去的理解說不通的現象。
+這件事其實更早就有人寫過。1995 年，Neal 在博士論文裡用同一個 $$1/\sqrt n$$ 推出無窮寬網路的 Gaussian process 極限，接著就說這個極限令人失望：「with Gaussian priors the contributions of individual hidden units are all negligible, and consequently, these units do not represent "hidden features"」。他的做法是換掉先驗，讓一部分單元在無窮寬下仍然保有不可忽略的權重。Jacot 等人為 GP 那一步引了 Neal 的書。
 
-NTK 之後有不少工作不在這三格裡。一種是做實驗確認核在訓練中會變，但核會不會變，一階變分就看得出來，看的是設定。這些實驗推翻的是流行的讀法，不是原文的數學；它們只對誤讀來說是新的。另一種是給已知的事取新名字：縮放決定特徵動不動，叫 lazy 和 rich；步長超過穩定上限時損失先衝高再掉下來，叫 [catapult](https://arxiv.org/abs/2003.02218v1)；把「核凍結」叫作 kernel gradient descent，讀起來就成了「核方法與特徵學習只能二選一」。
+回頭看第三章的七年，與其說大家在瞎忙，不如說工具選錯了。在參數空間裡對每個參數求梯度，配比天生會混進位移；在這個視角下，每轉一個旋鈕都像發現一個新的 regime，也就需要一個新名字、一條新的分界。把網路寫成積分，配比留在測度裡，同樣的現象只剩下兩個 $$\delta$$ 怎麼選。工具選對了，很多問題不是被解決，而是根本不會出現。
 
-誤讀流行一天，確認它的實驗就有一天的市場。
+最後想起那個老故事。幾個人在黑暗裡摸一頭大象：摸到鼻子的說它像蛇，摸到腿的說它像柱子，摸到耳朵的說它像扇子，摸到尾巴的說它像繩子。每個人都沒有說錯，他們手上摸到的確實是那個樣子；錯的是以為自己摸到了整頭象，然後為「大象到底像蛇還是像柱子」吵了起來。摸到初始值那一塊的說 kernel 是凍結的，摸到配比的說是縮放，摸到步長的說是學習率，摸到參數化的說是冪次。他們摸到的都是真的。
+
+需要的不是更靈巧的手，而是把燈打開。
 
 ## 參考資料
 
 - Jacot, A., Gabriel, F., & Hongler, C. (2018). [Neural Tangent Kernel: Convergence and Generalization in Neural Networks](https://arxiv.org/abs/1806.07572v4). NeurIPS 2018.
+- Neal, R. M. (1995). [Bayesian Learning for Neural Networks](https://www.cs.toronto.edu/~radford/ftp/thesis.pdf). PhD thesis, University of Toronto.
+- Du, S. S., Zhai, X., Póczos, B., & Singh, A. (2019). [Gradient Descent Provably Optimizes Over-parameterized Neural Networks](https://arxiv.org/abs/1810.02054v2). ICLR 2019.
+- Allen-Zhu, Z., Li, Y., & Song, Z. (2019). [A Convergence Theory for Deep Learning via Over-Parameterization](https://arxiv.org/abs/1811.03962v5). ICML 2019.
+- Arora, S., Du, S. S., Hu, W., Li, Z., Salakhutdinov, R., & Wang, R. (2019). [On Exact Computation with an Infinitely Wide Neural Net](https://arxiv.org/abs/1904.11955v2). NeurIPS 2019.
 - Lee, J., Xiao, L., Schoenholz, S. S., Bahri, Y., Novak, R., Sohl-Dickstein, J., & Pennington, J. (2019). [Wide Neural Networks of Any Depth Evolve as Linear Models Under Gradient Descent](https://arxiv.org/abs/1902.06720v4). NeurIPS 2019.
-- Chapelle, O. (2007). [Training a Support Vector Machine in the Primal](https://people.csail.mit.edu/torralba/LabelMeToolbox/primalSVM/primal.pdf). Neural Computation, 19(5), 1155–1178.
 - Chizat, L., Oyallon, E., & Bach, F. (2019). [On Lazy Training in Differentiable Programming](https://arxiv.org/abs/1812.07956v5). NeurIPS 2019.
-- Yang, G., & Hu, E. J. (2021). [Feature Learning in Infinite-Width Neural Networks](https://arxiv.org/abs/2011.14522v3). ICML 2021.
+- Geiger, M., Spigler, S., Jacot, A., & Wyart, M. (2019). [Disentangling feature and lazy training in deep neural networks](https://arxiv.org/abs/1906.08034v4).
 - Woodworth, B., Gunasekar, S., Lee, J. D., Moroshko, E., Savarese, P., Golan, I., Soudry, D., & Srebro, N. (2020). [Kernel and Rich Regimes in Overparametrized Models](https://arxiv.org/abs/2002.09277v3). COLT 2020.
 - Lewkowycz, A., Bahri, Y., Dyer, E., Sohl-Dickstein, J., & Gur-Ari, G. (2020). [The large learning rate phase of deep learning: the catapult mechanism](https://arxiv.org/abs/2003.02218v1).
+- Fort, S., Dziugaite, G. K., Paul, M., Kharaghani, S., Roy, D. M., & Ganguli, S. (2020). [Deep learning versus kernel learning: an empirical study of loss landscape geometry and the time evolution of the Neural Tangent Kernel](https://arxiv.org/abs/2010.15110v1). NeurIPS 2020.
+- Lee, J., Schoenholz, S. S., Pennington, J., Adlam, B., Xiao, L., Novak, R., & Sohl-Dickstein, J. (2020). [Finite Versus Infinite Neural Networks: an Empirical Study](https://arxiv.org/abs/2007.15801v2).
+- Yang, G., & Hu, E. J. (2021). [Feature Learning in Infinite-Width Neural Networks](https://arxiv.org/abs/2011.14522v3). ICML 2021.
+- Atanasov, A., Bordelon, B., & Pehlevan, C. (2021). [Neural Networks as Kernel Learners: The Silent Alignment Effect](https://arxiv.org/abs/2111.00034v2).
+- Yang, G., Hu, E. J., Babuschkin, I., Sidor, S., Liu, X., Farhi, D., Ryder, N., Pachocki, J., Chen, W., & Gao, J. (2022). [Tensor Programs V: Tuning Large Neural Networks via Zero-Shot Hyperparameter Transfer](https://arxiv.org/abs/2203.03466v2).
+- Bordelon, B., & Pehlevan, C. (2022). [Self-Consistent Dynamical Field Theory of Kernel Evolution in Wide Neural Networks](https://arxiv.org/abs/2205.09653v3). NeurIPS 2022.
+- Ba, J., Erdogdu, M. A., Suzuki, T., Wang, Z., Wu, D., & Yang, G. (2022). [High-dimensional Asymptotics of Feature Learning: How One Gradient Step Improves the Representation](https://arxiv.org/abs/2205.01445v1).
+- Yang, G., & Littwin, E. (2023). [Tensor Programs IVb: Adaptive Optimization in the Infinite-Width Limit](https://arxiv.org/abs/2308.01814v2).
+- Kunin, D., Raventós, A., Dominé, C., Chen, F., Klindt, D., Saxe, A., & Ganguli, S. (2024). [Get rich quick: exact solutions reveal how unbalanced initializations promote rapid feature learning](https://arxiv.org/abs/2406.06158v2). NeurIPS 2024.
+- Radhakrishnan, A., Beaglehole, D., Pandit, P., & Belkin, M. (2024). [Mechanism for feature learning in neural networks and backpropagation-free machine learning models](https://arxiv.org/abs/2212.13881v3). Science, 383(6690), 1461–1467.
+- Chou, C.-N., Le, H., Wang, Y., & Chung, S. (2025). [Feature Learning beyond the Lazy-Rich Dichotomy: Insights from Representational Geometry](https://arxiv.org/abs/2503.18114v2). ICML 2025.
+- Graldi, J., Breccia, A., Lanzillotta, G., Hofmann, T., & Noci, L. (2025). [The Importance of Being Lazy: Scaling Limits of Continual Learning](https://arxiv.org/abs/2506.16884v1). ICML 2025.
