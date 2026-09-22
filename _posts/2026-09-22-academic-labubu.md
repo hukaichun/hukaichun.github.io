@@ -2,7 +2,7 @@
 title: "學術界的 Labubu"
 subtitle: "工業級證明產出與知識界的環保意識"
 date: 2026-09-22
-tags: [research-practice, ai, ntk, kernel-methods]
+tags: [commentary, academia, ai, research-practice]
 description: "26 位 Fields 獎得主擔心 AI 會切斷數學的傳遞鏈。這個擔憂不是空穴來風：在當代 AI 出現之前，機器學習的 NTK 那條線就沒有被消化過。產出便宜了，垃圾就會堆積；該付帳的不是效率，是用指標的人。"
 ---
 
